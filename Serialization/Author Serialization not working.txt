@@ -1,0 +1,212 @@
+///.............Serialization Example with Author and Book Classes...........
+
+
+#include<iostream>
+#include<string.h>
+#include<map>
+#include<vector>
+
+#include<fstream>
+
+#include<boost/archive/text_iarchive.hpp>
+#include<boost/archive/text_oarchive.hpp>
+
+class Book;
+
+//template<typename T>
+class Author {
+private:
+
+	//	Error	C2039	'serialize' : is not a member of 'std::vector<int,std::allocator<int>>'	Serialization	
+
+	/*friend class boost::serialization::access;
+
+	
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar& name;
+		ar& bookID;
+		ar& IDCounter;
+	}*/
+	std::string name;
+	std::vector<int> bookID;
+	int* IDCounter;
+
+
+public:
+	//Author(std::string AuthName, std::vector<int> ID)
+	Author(std::string AuthName)
+	{
+		std::cout << "\nConstructor of Author called";
+
+		name = AuthName;
+		IDCounter = new int(0);
+	}
+	Author(Author& newAuth)
+	{
+		std::cout << "\nCopy Constructor of Author called";
+
+		name = newAuth.name;
+
+		IDCounter = new int(0);
+		IDCounter = newAuth.IDCounter;
+
+		for (auto itr = newAuth.bookID.begin(); itr != newAuth.bookID.end(); itr++) {
+			bookID.push_back(*itr);
+			(*IDCounter)++;
+		}
+
+	}
+	void setBookID(int id)
+	{
+		bookID.push_back(id);
+		(*IDCounter)++;
+	}
+	std::vector<int> getBookIDs()
+	{
+		return bookID;
+	}
+	int getCounter()
+	{
+		return *IDCounter;
+	}
+	Author& operator*()
+	{
+		return *this;
+
+	}
+	Author* operator->()
+	{
+		return this;
+	}
+	~Author() {
+		std::cout << "\n\nDestructor of Author called";
+	}
+
+};
+
+
+//template<typename T>
+class Book {
+	
+private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{
+		ar& bookTitle;
+		ar& ISBN;
+		ar& publishYear;
+		ar& bookDetail;
+	}
+	std::string bookTitle;
+	int ISBN;
+	int publishYear;
+	std::string bookDetail;
+public:
+	Book() {};
+	Book(std::string bTitle, int ID, int year, std::string detail)
+	{
+
+		std::cout << "\nConstructor of Book called";
+
+		bookTitle = bTitle;
+		ISBN = ID;
+		publishYear = year;
+		bookDetail = detail;
+
+	}
+	int getPublishyear()
+	{
+		return publishYear;
+	}
+	int getISBN()
+	{
+		return ISBN;
+	}
+	std::string getBookTitle()
+	{
+		return bookTitle;
+	}
+	std::string getBookDetail()
+	{
+		return bookDetail;
+	}
+	/*Book& operator=(std::shared_ptr<Author>& shPtr)
+	{
+		std::cout << "\nCopy operator of Author is called\n";
+
+		return *this;
+	}*/
+	Book& operator*()
+	{
+		return *this;
+
+	}
+	Book* operator->()
+	{
+		return this;
+	}
+	~Book()
+	{
+		std::cout << "\n\nDestructor of Book called";
+	}
+};
+
+
+
+
+int main()
+{
+	//std::ofstream ofsAuth("AuthorFile");
+	std::ofstream ofsBook("BookFile");
+	Book book1("BOOK1", 100, 2023, "\"New Book to be written in file BookFile\"\n");
+
+	
+	/*Book b1("ABC", 123, 2016, "Book about programming");
+	Book b2("ABCD", 1234, 2022, "Novel");
+	Book b3("ABCE", 567, 2011, "How to Program");*/
+
+	//Author author1("Author1");
+
+
+	//author1.setBookID(book1->getISBN());
+	//author1.setBookID(book1->getISBN());
+	//author1.setBookID(book1->getISBN());
+
+	//////Saving Author class in File
+	//{
+	//	boost::archive::text_oarchive oaAuth(ofsAuth);
+	//	oaAuth& author1;
+	//}
+
+	//Book book2("BOOK2", 101, 2023, "New Book2 to be written in file");
+	//Saving Author class in File
+	{
+		boost::archive::text_oarchive oaBook(ofsBook);
+	    // write class instance to archive
+		oaBook & book1;
+	}
+
+	Book newBook1;
+	{
+        // create and open an archive for input
+		std::ifstream ifs("BookFile");
+	    boost::archive::text_iarchive ia(ifs);
+	    // read class state from archive
+		ia& newBook1;
+	        // archive and stream closed when destructors are called
+	}
+		
+	std::cout << "\n\nNewBook Title: " << newBook1.getBookTitle() << "\n";
+	std::cout << "\nNewBook Number: " << newBook1.getISBN() << "\n";
+	std::cout << "\nNewBook Year: " << newBook1.getPublishyear() << "\n";
+	std::cout << "\nNewBook Detail: " << newBook1.getBookDetail() << "\n";
+	
+	
+
+
+	std::cout << "\n\n\n";
+	return 0;
+}
